@@ -1,0 +1,13 @@
+* Purpose
+
+Used to move temporary sqlite files into $XDG_RUNTIME_DIR. This is
+e.g. required when the sqlite database is located on NFS shares.
+
+Example:
+
+#+BEGIN_SRC sh
+env \
+	X_QSLITE_SHM_PROG='/usr/lib*/firefox*/firefox*' \
+	LD_PRELOAD=libsqlite-shm.so \
+	firefox
+#+END_SRC

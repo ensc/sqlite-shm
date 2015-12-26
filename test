@@ -1,0 +1,14 @@
+#! /bin/bash
+
+t=`mktemp -d -t sqlite-shm.XXXXXX`
+trap "rm -rf $t" EXIT
+
+
+
+strace -E LD_PRELOAD=`pwd`/libsqlite-shm.so  \
+sqlite3 $t/test.sqlite <<EOF
+PRAGMA journal_mode=wal;
+PRAGMA locking=exclusive;
+create table A ( int a );
+INSERT INTO A VALUES (1);
+EOF
