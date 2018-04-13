@@ -120,6 +120,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 
 #define CALL(_type, _fn, _path, ...)					\
 	({								\
+		bool is_db;						\
 		char *buf;						\
 		char const *p = translate_path(_path, &buf, &is_db);	\
 		if (0)							\
@@ -165,7 +166,6 @@ static int (*real_open)(const char *pathname, int flags, mode_t mode);
 int open(const char *pathname, int flags, mode_t mode)
 {
 //	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	bool	is_db;
 	int	rc = CALL(int, open, pathname, flags, mode);
 
 	return rc;
@@ -175,7 +175,6 @@ static int (*real_open64)(const char *pathname, int flags, mode_t mode);
 int open64(const char *pathname, int flags, mode_t mode)
 {
 //	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	bool	is_db;
 	int	rc = CALL(int, open64, pathname, flags, mode);
 
 	return rc;
