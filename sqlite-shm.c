@@ -183,7 +183,12 @@ static int (*real_close)(int fd);
 int close(int fd)
 {
 //	fprintf(stderr, "%s:%u %d\n", __func__, __LINE__, fd);
-	int	db_fd = __atomic_exchange_n(&g_dbs[fd].fd, -1, __ATOMIC_SEQ_CST);
+	int	db_fd;
+
+	if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs))
+		db_fd = __atomic_exchange_n(&g_dbs[fd].fd, -1, __ATOMIC_SEQ_CST);
+	else
+		db_fd = -1;
 
 	if (db_fd != -1)
 		real_close(db_fd);
@@ -234,7 +239,8 @@ int fcntl(int fd, int cmd, uintptr_t arg)
 	case F_GETLK:
 	case F_SETLK:
 	case F_SETLKW:
-		if (g_dbs[fd].fd != -1)
+		if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs) &&
+		    g_dbs[fd].fd != -1)
 			fd = g_dbs[fd].fd;
 		break;
 	}
