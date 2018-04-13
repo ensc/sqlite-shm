@@ -35,6 +35,8 @@
 
 #include "md5.h"
 
+#define ARRAY_SIZE(_a)	(sizeof(_a) / sizeof(_a)[0])
+
 static bool has_suffix(char const *s, char const *sfx)
 {
 	size_t		l_s = s ? strlen(s) : 0;
