@@ -60,7 +60,7 @@ static inline bool run_unittests(void)
 #endif
 }
 
-static char const *translate_path(char const *pathname, char **free_buf, 
+static char const *translate_path(char const *pathname, char **free_buf,
 				  bool *is_db_)
 {
 	*free_buf = NULL;
@@ -83,7 +83,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 	else
 		p  = pathname;
 
-	size_t		sfx_len = 
+	size_t		sfx_len =
 		(is_db ? sizeof(".sqlite") : sizeof(".sqlite-wal")) - 1u;
 	char const	*suffix = p + strlen(p) - sfx_len;
 	size_t		l = suffix - p;
@@ -216,7 +216,7 @@ int close(int fd)
 
 	if (db_fd != -1)
 		real_close(db_fd);
-		
+
 	return real_close(fd);
 }
 
@@ -268,7 +268,7 @@ int fcntl(int fd, int cmd, uintptr_t arg)
 			fd = g_dbs[fd].fd;
 		break;
 	}
-		
+
 	//fprintf(stderr, "%s:%u (%d,%d,%lx)\n", __func__, __LINE__, fd, cmd, arg);
 
 	return real_fcntl(fd, cmd, arg);
@@ -408,7 +408,7 @@ int execve(char const *filename, char * const argv[], char *const envp[])
 
 	fprintf(stderr, "execve(%s, %s), %d, %d|%d\n", filename, argv[0],
 		do_disable, passthrough, g_active);
-	
+
 	rc = real_execve(filename, argv, (char * const *)new_env);
 	free(new_env);
 
@@ -436,7 +436,7 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	real_close = dlsym(RTLD_NEXT, "close");
 	real_execve = dlsym(RTLD_NEXT, "execve");
 	real_socket = dlsym(RTLD_NEXT, "socket");
-	
+
 	rt_dir = getenv("XDG_RUNTIME_DIR");
 
 	disabled = getenv("X_SQLITE_SHM_DISABLED");
