@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <fnmatch.h>
 #include <dlfcn.h>
+#include <sys/socket.h>
 
 #define open	_libc_open
 #define open64	_libc_open64
@@ -178,6 +179,15 @@ int open64(const char *pathname, int flags, mode_t mode)
 	int	rc = CALL(int, open64, pathname, flags | O_CLOEXEC, mode);
 
 	return rc;
+}
+
+static int (*real_socket)(int domain, int type, int protocol);
+int socket(int domain, int type, int protocol)
+{
+	if (domain == AF_INET || domain == AF_INET6)
+		type |= SOCK_CLOEXEC;
+
+	return real_socket(domain, type, protocol);
 }
 
 static int (*real_close)(int fd);
@@ -372,6 +382,7 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	real_fcntl = dlsym(RTLD_NEXT, "fcntl");
 	real_close = dlsym(RTLD_NEXT, "close");
 	real_execve = dlsym(RTLD_NEXT, "execve");
+	real_socket = dlsym(RTLD_NEXT, "socket");
 	
 	rt_dir = getenv("XDG_RUNTIME_DIR");
 
