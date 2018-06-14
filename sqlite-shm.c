@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 #include <fnmatch.h>
 #include <dlfcn.h>
 #include <sys/socket.h>
