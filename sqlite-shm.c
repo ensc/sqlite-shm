@@ -305,6 +305,33 @@ static void strip_ld_preload(char *e)
 	//fprintf(stderr, "post: '%s'\n", e);
 }
 
+static void _test_strip_ld_preload(char const *buf, char const *exp)
+{
+	char	*ldpreload = strdup(buf);
+
+	strip_ld_preload(ldpreload);
+	assert(strcmp(ldpreload, exp) == 0);
+}
+
+static void unit_test_strip_ld_preload(void)
+{
+
+	_test_strip_ld_preload("", "");
+	_test_strip_ld_preload(MYSELF, "");
+	_test_strip_ld_preload("/" MYSELF, "");
+	_test_strip_ld_preload("/foo/" MYSELF, "");
+	_test_strip_ld_preload("a:b", "a:b");
+	_test_strip_ld_preload(MYSELF "x", MYSELF "x");
+	_test_strip_ld_preload("x" MYSELF "x", "x" MYSELF "x");
+	_test_strip_ld_preload("x" MYSELF, "x" MYSELF);
+	_test_strip_ld_preload("a:" MYSELF, "a");
+	_test_strip_ld_preload("a:foo/" MYSELF, "a");
+	_test_strip_ld_preload("a:" MYSELF ":", "a:");
+	_test_strip_ld_preload("a:foo/" MYSELF ":", "a:");
+	_test_strip_ld_preload("a:" MYSELF ":b", "a:b");
+	_test_strip_ld_preload("a:foo/" MYSELF ":b", "a:b");
+}
+
 static int (*real_execve)(char const *, char * const [], char * const []);
 int execve(char const *filename, char * const argv[], char *const envp[])
 {
@@ -385,6 +412,7 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	char const	*disabled;
 
 	if (run_unittests()) {
+		unit_test_strip_ld_preload();
 	}
 
 	for (i = 0; i < sizeof g_dbs / sizeof g_dbs[0]; ++i)
