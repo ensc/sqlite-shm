@@ -134,7 +134,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 
 #define CALL(_type, _fn, _path, ...)					\
 	({								\
-		bool is_db;						\
+		bool is_db = false;						\
 		char *buf;						\
 		char const *p = translate_path(_path, &buf, &is_db);	\
 		if (0)							\
