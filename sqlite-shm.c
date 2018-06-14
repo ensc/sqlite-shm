@@ -94,7 +94,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 	MD5_CTX		ctx;
 	unsigned char	hash[16];
 	char		hash_str[strlen(rt_dir) + 1 + 2 * sizeof hash + 1
-				 + strlen(suffix)];
+				 + strlen(suffix) + sizeof ".lock"];
 	char		*out = hash_str;
 	size_t		i;
 
@@ -113,7 +113,10 @@ static char const *translate_path(char const *pathname, char **free_buf,
 		*out++ = HEX_CHAR[(hash[i] >> 4) & 0x0f];
 		*out++ = HEX_CHAR[(hash[i] >> 0) & 0x0f];
 	}
-	strcpy(out, suffix);
+	out = stpcpy(out, suffix);
+
+	if (is_db)
+		out = stpcpy(out, ".lock");
 
 	*free_buf = strdup(hash_str);
 	return *free_buf;
