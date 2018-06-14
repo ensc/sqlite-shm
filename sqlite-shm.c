@@ -50,6 +50,15 @@ static bool has_suffix(char const *s, char const *sfx)
 
 static char const *rt_dir = NULL;
 
+static inline bool run_unittests(void)
+{
+#ifdef NDEBUG
+	return false;
+#else
+	return true;
+#endif
+}
+
 static char const *translate_path(char const *pathname, char **free_buf, 
 				  bool *is_db_)
 {
@@ -374,6 +383,9 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 //	fprintf(stderr, "%s:%u\n", __func__, __LINE__);
 	size_t		i;
 	char const	*disabled;
+
+	if (run_unittests()) {
+	}
 
 	for (i = 0; i < sizeof g_dbs / sizeof g_dbs[0]; ++i)
 		g_dbs[i].fd = -1;
