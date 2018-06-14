@@ -166,7 +166,7 @@ static int (*real_open)(const char *pathname, int flags, mode_t mode);
 int open(const char *pathname, int flags, mode_t mode)
 {
 //	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	int	rc = CALL(int, open, pathname, flags, mode);
+	int	rc = CALL(int, open, pathname, flags | O_CLOEXEC, mode);
 
 	return rc;
 }
@@ -175,7 +175,7 @@ static int (*real_open64)(const char *pathname, int flags, mode_t mode);
 int open64(const char *pathname, int flags, mode_t mode)
 {
 //	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	int	rc = CALL(int, open64, pathname, flags, mode);
+	int	rc = CALL(int, open64, pathname, flags | O_CLOEXEC, mode);
 
 	return rc;
 }
