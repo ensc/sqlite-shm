@@ -273,7 +273,8 @@ int fcntl(int fd, int cmd, uintptr_t arg)
 	return real_fcntl(fd, cmd, arg);
 }
 
-#define MYSELF	"/libsqlite-shm.so"
+#define MYSELF	"libsqlite-shm.so"
+#define MYSELF_LEN (sizeof MYSELF - 1u)
 
 static void strip_ld_preload(char *e)
 {
@@ -282,22 +283,30 @@ static void strip_ld_preload(char *e)
 	//fprintf(stderr, "pre: '%s'\n", e);
 	while (*in) {
 		char	*next;
+		bool	strip_colon = false;
 
 		while (*in == ':')
 			++in;
 
 		next = strchr(in, ':');
 
-		if (next == NULL)
+		if (next == NULL) {
+			strip_colon = true;
 			next = in + strlen(in);
+		}
 
-		if (next < in + sizeof MYSELF - 1 ||
-		    strncmp(next - sizeof MYSELF + 1u, MYSELF,
-			    sizeof MYSELF - 1u) != 0) {
+		if (next < in + MYSELF_LEN ||
+		    memcmp(next - MYSELF_LEN, MYSELF, MYSELF_LEN) != 0 ||
+		    (next != in + MYSELF_LEN &&
+		     next[-(MYSELF_LEN + 1)] != ':' &&
+		     next[-(MYSELF_LEN + 1)] != '/')) {
 			in = next;
 		} else {
 			while (*next == ':')
 				++next;
+
+			while (strip_colon && in > e && in[-1] == ':')
+				--in;
 
 			memmove(in, next, strlen(next) + 1);
 		}
