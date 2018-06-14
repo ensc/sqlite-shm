@@ -74,7 +74,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 		p  = pathname;
 
 	size_t		sfx_len = 
-		(is_db ? sizeof(".sqlite") : sizeof("sqlite-wal")) - 1u;
+		(is_db ? sizeof(".sqlite") : sizeof(".sqlite-wal")) - 1u;
 	char const	*suffix = p + strlen(p) - sfx_len;
 	size_t		l = suffix - p;
 	char		basename[l + 1];
