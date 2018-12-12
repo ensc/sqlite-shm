@@ -41,6 +41,18 @@
 
 #define ARRAY_SIZE(_a)	(sizeof(_a) / sizeof(_a)[0])
 
+#define debug(fmt, ...) do {						\
+		if (0)							\
+			fprintf(stderr, "  %s:%u " fmt "\n",		\
+				__func__, __LINE__, ##__VA_ARGS__);	\
+	} while (0)
+
+#define trace(fmt, ...) do {						\
+		if (0)							\
+			fprintf(stderr, "%s(" fmt ")\n",		\
+				__func__, ##__VA_ARGS__);		\
+	} while (0)
+
 static bool has_suffix(char const *s, char const *sfx)
 {
 	size_t		l_s = s ? strlen(s) : 0;
@@ -139,9 +151,7 @@ static char const *translate_path(char const *pathname, char **free_buf,
 		bool is_db = false;						\
 		char *buf;						\
 		char const *p = translate_path(_path, &buf, &is_db);	\
-		if (0)							\
-		fprintf(stderr, "%s:%u => p='%s' => '%s'/%d\n", __func__, __LINE__, \
-			_path, p, is_db);				\
+		debug("p='%s' => '%s'/%d", _path, p, is_db);		\
 		_type rc = real_ ## _fn(is_db ? _path : p, ##__VA_ARGS__); \
 		if (rc >= 0 && is_db)					\
 			register_db(rc, _path, p);			\
@@ -161,9 +171,7 @@ static void register_db(int fd, char const *orig_path, char const *xlate_path)
 {
 	int		fake_fd;
 
-	if (0)
-		fprintf(stderr, "%s:%u: %d, %s, %s\n", __func__, __LINE__,
-			fd, orig_path, xlate_path);
+	debug("%d, %s, %s", fd, orig_path, xlate_path);
 
 	if (g_dbs[fd].fd != -1) {
 		fprintf(stderr, "internal error; fd already used\n");
@@ -181,8 +189,10 @@ static void register_db(int fd, char const *orig_path, char const *xlate_path)
 static int (*real_open)(const char *pathname, int flags, mode_t mode);
 int open(const char *pathname, int flags, mode_t mode)
 {
-//	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	int	rc = CALL(int, open, pathname, flags | O_CLOEXEC, mode);
+	int	rc;
+
+	trace("%s, %x, %o", pathname, flags, mode);
+	rc = CALL(int, open, pathname, flags | O_CLOEXEC, mode);
 
 	return rc;
 }
@@ -190,8 +200,10 @@ int open(const char *pathname, int flags, mode_t mode)
 static int (*real_open64)(const char *pathname, int flags, mode_t mode);
 int open64(const char *pathname, int flags, mode_t mode)
 {
-//	fprintf(stderr, "%s:%u (%s, %d, %o)\n", __func__, __LINE__, pathname, flags, mode);
-	int	rc = CALL(int, open64, pathname, flags | O_CLOEXEC, mode);
+	int	rc;
+
+	trace("%s, %x, %o", pathname, flags, mode);
+	rc = CALL(int, open64, pathname, flags | O_CLOEXEC, mode);
 
 	return rc;
 }
@@ -199,6 +211,8 @@ int open64(const char *pathname, int flags, mode_t mode)
 static int (*real_socket)(int domain, int type, int protocol);
 int socket(int domain, int type, int protocol)
 {
+	trace("%d, %d, %d", domain, type, protocol);
+
 	if (domain == AF_INET || domain == AF_INET6)
 		type |= SOCK_CLOEXEC;
 
@@ -208,8 +222,9 @@ int socket(int domain, int type, int protocol)
 static int (*real_close)(int fd);
 int close(int fd)
 {
-//	fprintf(stderr, "%s:%u %d\n", __func__, __LINE__, fd);
 	int	db_fd;
+
+	trace("%d", fd);
 
 	if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs))
 		db_fd = __atomic_exchange_n(&g_dbs[fd].fd, -1, __ATOMIC_SEQ_CST);
@@ -225,14 +240,14 @@ int close(int fd)
 static int (*real_lockf)(int fd, int cmd, off_t len);
 int lockf(int fd, int cmd, off_t len)
 {
-//	fprintf(stderr, "%s:%u (%d,%d,%ld)\n", __func__, __LINE__, fd, cmd, len);
+	trace("%d,%d,%ld", fd, cmd, len);
 	return real_lockf(fd, cmd, len);
 }
 
 static int (*real_lockf64)(int fd, int cmd, off_t len);
 int lockf64(int fd, int cmd, off_t len)
 {
-//	fprintf(stderr, "%s:%u (%d,%d,%ld)\n", __func__, __LINE__, fd, cmd, len);
+	trace("%d,%d,%ld", fd, cmd, len);
 	return real_lockf64(fd, cmd, len);
 }
 
@@ -243,13 +258,15 @@ int fcntl(int fd, int cmd, uintptr_t arg)
 	case F_GETLK:
 	case F_SETLK:
 	case F_SETLKW:
+		trace("%d, %d, %lx", fd, cmd, arg);
+
 		if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs) &&
 		    g_dbs[fd].fd != -1)
 			fd = g_dbs[fd].fd;
 		break;
 	}
 
-	//fprintf(stderr, "%s:%u (%d,%d,%lx)\n", __func__, __LINE__, fd, cmd, arg);
+	debug("%d,%d,%lx", fd, cmd, arg);
 
 	return real_fcntl(fd, cmd, arg);
 }
@@ -261,13 +278,15 @@ int fcntl64 (int fd, int cmd, uintptr_t arg)
 	case F_GETLK:
 	case F_SETLK:
 	case F_SETLKW:
+		trace("%d, %d, %lx", fd, cmd, arg);
+
 		if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs) &&
 		    g_dbs[fd].fd != -1)
 			fd = g_dbs[fd].fd;
 		break;
 	}
 
-	//fprintf(stderr, "%s:%u (%d,%d,%lx)\n", __func__, __LINE__, fd, cmd, arg);
+	debug("%d,%d,%lx", fd, cmd, arg);
 
 	return real_fcntl(fd, cmd, arg);
 }
@@ -279,7 +298,7 @@ static void strip_ld_preload(char *e)
 {
 	char	*in = e;
 
-	//fprintf(stderr, "pre: '%s'\n", e);
+	debug("pre: '%s'\n", e);
 	while (*in) {
 		char	*next;
 		bool	strip_colon = false;
@@ -310,7 +329,7 @@ static void strip_ld_preload(char *e)
 			memmove(in, next, strlen(next) + 1);
 		}
 	}
-	//fprintf(stderr, "post: '%s'\n", e);
+	debug("post: '%s'\n", e);
 }
 
 static void _test_strip_ld_preload(char const *buf, char const *exp)
@@ -399,12 +418,12 @@ int execve(char const *filename, char * const argv[], char *const envp[])
 			*out_env++ = *e;
 		}
 
-		//fprintf(stderr, "  | %p, '%s'\n", out_env, out_env[-1]);
+		debug("  | %p, '%s'\n", out_env, out_env[-1]);
 	}
 
 	*out_env++ = NULL;
 
-	fprintf(stderr, "execve(%s, %s), %d, %d|%d\n", filename, argv[0],
+	debug("%s, %s: %d, %d|%d\n", filename, argv[0],
 		do_disable, passthrough, g_active);
 
 	rc = real_execve(filename, argv, (char * const *)new_env);
@@ -415,9 +434,10 @@ int execve(char const *filename, char * const argv[], char *const envp[])
 
 static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 {
-//	fprintf(stderr, "%s:%u\n", __func__, __LINE__);
 	size_t		i;
 	char const	*disabled;
+
+	trace("");
 
 	if (run_unittests()) {
 		unit_test_strip_ld_preload();
