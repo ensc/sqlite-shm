@@ -7,7 +7,7 @@ Example:
 
 #+BEGIN_SRC sh
 env \
-	X_QSLITE_SHM_PROG='/usr/lib*/firefox*/firefox*' \
+	X_SQLITE_SHM_PROG='/usr/lib*/firefox*/firefox*' \
 	LD_PRELOAD=libsqlite-shm.so \
 	firefox
 #+END_SRC
