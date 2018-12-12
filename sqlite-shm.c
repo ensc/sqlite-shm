@@ -30,10 +30,12 @@
 #define open	_libc_open
 #define open64	_libc_open64
 #define fcntl	_libc_fcntl
+#define fcntl64	_libc_fcntl64
 #include <fcntl.h>
 #undef open
 #undef open64
 #undef fcntl
+#undef fcntl64
 
 #include "md5.h"
 
@@ -274,6 +276,24 @@ int fcntl(int fd, int cmd, uintptr_t arg)
 	return real_fcntl(fd, cmd, arg);
 }
 
+static int (*real_fcntl64)(int fd, int cmd, uintptr_t arg);
+int fcntl64 (int fd, int cmd, uintptr_t arg)
+{
+	switch (cmd) {
+	case F_GETLK:
+	case F_SETLK:
+	case F_SETLKW:
+		if (fd >= 0 && (size_t)fd < ARRAY_SIZE(g_dbs) &&
+		    g_dbs[fd].fd != -1)
+			fd = g_dbs[fd].fd;
+		break;
+	}
+
+	//fprintf(stderr, "%s:%u (%d,%d,%lx)\n", __func__, __LINE__, fd, cmd, arg);
+
+	return real_fcntl(fd, cmd, arg);
+}
+
 #define MYSELF	"libsqlite-shm.so"
 #define MYSELF_LEN (sizeof MYSELF - 1u)
 
@@ -433,6 +453,7 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	real_lockf = dlsym(RTLD_NEXT, "lockf");
 	real_lockf64 = dlsym(RTLD_NEXT, "lockf64");
 	real_fcntl = dlsym(RTLD_NEXT, "fcntl");
+	real_fcntl64 = dlsym(RTLD_NEXT, "fcntl64");
 	real_close = dlsym(RTLD_NEXT, "close");
 	real_execve = dlsym(RTLD_NEXT, "execve");
 	real_socket = dlsym(RTLD_NEXT, "socket");
