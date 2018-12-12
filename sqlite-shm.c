@@ -237,28 +237,6 @@ int lockf64(int fd, int cmd, off_t len)
 }
 
 static int (*real_fcntl)(int fd, int cmd, uintptr_t arg);
-static int fnctl_lk(int fd, int cmd, struct flock *fl)
-{
-
-	switch (cmd) {
-	case F_GETLK:
-		fprintf(stderr, "  GETLK");
-		break;
-	case F_SETLK:
-		fprintf(stderr, "  SETLK");
-		break;
-	case F_SETLKW:
-		fprintf(stderr, "  SETLKW");
-		break;
-	}
-
-	if (0)
-	fprintf(stderr, " %hd, %hd, %zx, %zd\n",
-		fl->l_type, fl->l_whence, fl->l_start, fl->l_len);
-
-	return 0;
-}
-
 int fcntl(int fd, int cmd, uintptr_t arg)
 {
 	switch (cmd) {
