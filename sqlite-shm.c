@@ -303,7 +303,7 @@ static void strip_ld_preload(char *e)
 {
 	char	*in = e;
 
-	debug("pre: '%s'\n", e);
+	debug("pre: '%s'", e);
 	while (*in) {
 		char	*next_col;
 		char	*next_ws;
@@ -345,7 +345,7 @@ static void strip_ld_preload(char *e)
 			memmove(in, next, strlen(next) + 1);
 		}
 	}
-	debug("post: '%s'\n", e);
+	debug("post: '%s'", e);
 }
 
 static void _test_strip_ld_preload(char const *buf, char const *exp)
@@ -440,12 +440,12 @@ int execve(char const *filename, char * const argv[], char *const envp[])
 			*out_env++ = *e;
 		}
 
-		debug("  | %p, '%s'\n", out_env, out_env[-1]);
+		debug("  | %p, '%s'", out_env, out_env[-1]);
 	}
 
 	*out_env++ = NULL;
 
-	debug("%s, %s: %d, %d|%d\n", filename, argv[0],
+	debug("%s, %s: %d, %d|%d", filename, argv[0],
 		do_disable, passthrough, g_active);
 
 	rc = real_execve(filename, argv, (char * const *)new_env);
