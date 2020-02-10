@@ -294,19 +294,35 @@ int fcntl64 (int fd, int cmd, uintptr_t arg)
 #define MYSELF	"libsqlite-shm.so"
 #define MYSELF_LEN (sizeof MYSELF - 1u)
 
+static bool is_ld_delim(char c)
+{
+	return c == ':' || c == ' ';
+}
+
 static void strip_ld_preload(char *e)
 {
 	char	*in = e;
 
 	debug("pre: '%s'\n", e);
 	while (*in) {
+		char	*next_col;
+		char	*next_ws;
 		char	*next;
 		bool	strip_colon = false;
 
-		while (*in == ':')
+		while (is_ld_delim(*in))
 			++in;
 
-		next = strchr(in, ':');
+		next_col = strchr(in, ':');
+		next_ws  = strchr(in, ' ');
+		if (!next_col)
+			next = next_ws;
+		else if (!next_ws)
+			next = next_col;
+		else if (next_col < next_ws)
+			next = next_col;
+		else
+			next = next_ws;
 
 		if (next == NULL) {
 			strip_colon = true;
@@ -316,14 +332,14 @@ static void strip_ld_preload(char *e)
 		if (next < in + MYSELF_LEN ||
 		    memcmp(next - MYSELF_LEN, MYSELF, MYSELF_LEN) != 0 ||
 		    (next != in + MYSELF_LEN &&
-		     next[-(MYSELF_LEN + 1)] != ':' &&
+		     !is_ld_delim(next[-(MYSELF_LEN + 1)]) &&
 		     next[-(MYSELF_LEN + 1)] != '/')) {
 			in = next;
 		} else {
-			while (*next == ':')
+			while (is_ld_delim(*next))
 				++next;
 
-			while (strip_colon && in > e && in[-1] == ':')
+			while (strip_colon && in > e && is_ld_delim(in[-1]))
 				--in;
 
 			memmove(in, next, strlen(next) + 1);
@@ -348,14 +364,20 @@ static void unit_test_strip_ld_preload(void)
 	_test_strip_ld_preload("/" MYSELF, "");
 	_test_strip_ld_preload("/foo/" MYSELF, "");
 	_test_strip_ld_preload("a:b", "a:b");
+	_test_strip_ld_preload("a b", "a b");
 	_test_strip_ld_preload(MYSELF "x", MYSELF "x");
 	_test_strip_ld_preload("x" MYSELF "x", "x" MYSELF "x");
 	_test_strip_ld_preload("x" MYSELF, "x" MYSELF);
 	_test_strip_ld_preload("a:" MYSELF, "a");
+	_test_strip_ld_preload("a " MYSELF, "a");
 	_test_strip_ld_preload("a:foo/" MYSELF, "a");
+	_test_strip_ld_preload("a foo/" MYSELF, "a");
 	_test_strip_ld_preload("a:" MYSELF ":", "a:");
+	_test_strip_ld_preload("a " MYSELF ":", "a ");
+	_test_strip_ld_preload("a " MYSELF " ", "a ");
 	_test_strip_ld_preload("a:foo/" MYSELF ":", "a:");
 	_test_strip_ld_preload("a:" MYSELF ":b", "a:b");
+	_test_strip_ld_preload("a " MYSELF " b", "a b");
 	_test_strip_ld_preload("a:foo/" MYSELF ":b", "a:b");
 }
 
