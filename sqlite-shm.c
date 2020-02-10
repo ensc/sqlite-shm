@@ -483,6 +483,23 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	disabled = getenv("X_SQLITE_SHM_DISABLED");
 	g_active = !disabled || *disabled == '0';
 
+	if (!g_active) {
+		char	*tmp = getenv("LD_PRELOAD");
+		if (tmp) {
+			tmp = strdup(tmp);
+			strip_ld_preload(tmp);
+
+			if (*tmp)
+				setenv("LD_PRELOAD", tmp, 1);
+			else
+				unsetenv("LD_PRELOAD");
+
+			debug("stripped LD_PRELOAD to '%s'", tmp);
+
+			free(tmp);
+		}
+	}
+
 	if (!disabled)
 		setenv("X_SQLITE_SHM_DISABLED", "0", 0);
 }
