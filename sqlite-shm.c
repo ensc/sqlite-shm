@@ -291,6 +291,40 @@ int fcntl64 (int fd, int cmd, uintptr_t arg)
 	return real_fcntl(fd, cmd, arg);
 }
 
+static int (*real_stat)(const char *pathname, struct stat *statbuf);
+int stat(const char *pathname, struct stat *statbuf)
+{
+	bool		is_db = false;
+	char		*buf;
+	char const	*p;
+	int		rc;
+
+	trace("%s, %p", pathname, statbuf);
+
+	p  = translate_path(pathname, &buf, &is_db);
+	rc = real_stat(is_db ? pathname : p, statbuf);
+	free(buf);
+
+	return rc;
+}
+
+static int (*real_unlink)(const char *pathname);
+int unlink(const char *pathname)
+{
+	bool		is_db = false;
+	char		*buf;
+	char const	*p;
+	int		rc;
+
+	trace("%s", pathname);
+
+	p  = translate_path(pathname, &buf, &is_db);
+	rc = real_unlink(is_db ? pathname : p);
+	free(buf);
+
+	return rc;
+}
+
 #define MYSELF	"libsqlite-shm.so"
 #define MYSELF_LEN (sizeof MYSELF - 1u)
 
@@ -477,6 +511,8 @@ static void  __attribute__((__constructor__)) init_sqlite_shm(void)
 	real_close = dlsym(RTLD_NEXT, "close");
 	real_execve = dlsym(RTLD_NEXT, "execve");
 	real_socket = dlsym(RTLD_NEXT, "socket");
+	real_stat = dlsym(RTLD_NEXT, "stat");
+	real_unlink = dlsym(RTLD_NEXT, "unlink");
 
 	rt_dir = getenv("XDG_RUNTIME_DIR");
 
